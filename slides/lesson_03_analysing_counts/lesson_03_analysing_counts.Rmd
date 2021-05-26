@@ -1,0 +1,262 @@
+---
+title: "Intro to linear models <br> (for scared ecologists)"
+author: "Guy F. Sutton"
+subtitle: "Lesson 3: Analysing count data"
+date: "2021"
+institute: Centre for Biological Control, Department of Zoology and Entomology, Rhodes University, Makhanda
+#session: '03'
+output:
+  xaringan::moon_reader
+---
+
+```{r setup, include = FALSE}
+options(htmltools.dir.version = FALSE)
+library(knitr)
+library(tidyverse)
+library(xaringanExtra)
+library(fontawesome)
+library(here)
+# set default options
+opts_chunk$set(echo=FALSE,
+               collapse = TRUE,
+               fig.width = 7.252,
+               fig.height = 4,
+               dpi = 300)
+# set engines
+knitr::knit_engines$set("markdown")
+xaringanExtra::use_tile_view()
+xaringanExtra::use_panelset()
+xaringanExtra::use_clipboard()
+xaringanExtra::use_webcam()
+xaringanExtra::use_broadcast()
+xaringanExtra::use_share_again()
+xaringanExtra::style_share_again(
+  share_buttons = c("twitter", "linkedin", "pocket"))
+
+# Change ggplot theme
+# - This makes the graphs we will eventually make look pretty. 
+# - Don't worry about this for now. 
+theme_set(theme_classic() +
+            theme(panel.border = element_rect(colour = "black", 
+                                              fill = NA),
+                  axis.text = element_text(colour = "black"),
+                  axis.title.x = element_text(margin = unit(c(2, 0, 0, 0), 
+                                                            "mm")),
+                  axis.title.y = element_text(margin = unit(c(0, 4, 0, 0), 
+                                                            "mm")),
+                  legend.position = "none"))
+```
+
+class: title-slide, right, top
+```{r insert_image_background, include = FALSE}
+# Take this code out the chunk and put it in the document to insert images on the slide 
+#background-image: url(img/hex-xaringan.png), url(img/frame-art.png)
+#background-position: 90% 75%, 75% 75%
+#background-size: 8%, cover
+```
+
+.right-column[
+  # `r rmarkdown::metadata$title`
+  ### `r rmarkdown::metadata$subtitle`
+  
+  ### **`r rmarkdown::metadata$author`**<br>
+  *`r rmarkdown::metadata$institute`* <br>
+    `r rmarkdown::metadata$date`
+]
+
+---
+  
+# Count data 
+
+- Count data is ubiqutous in ecology.
+
+--
+
+  - e.g. No. of FCM per fruit
+  - e.g. No. of ticks aebra
+  - e.g. Abundances of impala per hectare in the Kruger National Park
+
+--
+
+- Counts (or abundances) are defined as non-negative integers.
+
+--
+
+  - i.e. They cannot take a decimal place
+  
+--
+
+  - e.g. 0 FCM per fruit, 7 ticks on a zebra, 385 impala per hectare
+
+--
+
+  - NOT: 33.15 psyllids per leaf 
+
+--
+
+  - ALSO NOT: 27% of the flies dead
+
+---
+
+# An example
+
+- Count the no. of FCM larvae from n = 20 fruits from 10 different citrus varieties (n = 200 fruits in total).
+
+--
+
+  - Question: *Are FCM abundances higher on some citrus varieties than others?*
+
+--
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", out.height="80%", out.width="80%"}
+# Simulate normal data across groups for visual comparison on next slides 
+set.seed(2021)             
+data_normal <- data.frame(Y = rnorm(n = 200, mean = 6, sd = 2),
+                          citrus_var = rep(LETTERS[1:20], each = 10)) %>%
+  dplyr::mutate(Y = round(Y, digits = 0))
+
+# Simulate Poisson data across groups 
+set.seed(2021)             
+data <- data.frame(Y = rnbinom(n = 200, mu = 4, size = 5),
+                   citrus_var = rep(LETTERS[1:20], each = 10))
+
+ggplot(data = data, aes(x = citrus_var,
+                        y = Y,
+                        fill = citrus_var)) +
+  geom_boxplot() +
+  labs(x = "Citrus variety",
+       y = "No. of FCM larvae")
+```
+
+--
+
+.center[`r kableExtra::text_spec("What's the big deal?", color = "red")`]
+
+---
+
+# Counts are not normal (literally)
+
+- Counts typically do not conform to assumptions of normality for statistical tests.
+
+--
+
+  - Count data typically follows a strong mean-variance relationship. 
+  
+--
+
+  - In many count datasets, there are many zeros and small counts, and successively fewer larger counts.
+
+--
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", out.height="80%", out.width="85%"}
+# Show how counts usually have many zeroes and small numbers 
+count_plot <- ggplot(data = data, aes(x = Y)) +
+  geom_bar() +
+  labs(x = "No. of FCM larvae",
+       y = "Frequency",
+       subtitle = "(b) What counts usually look like") +
+  scale_x_continuous(breaks = seq(0, 15, 1),
+                     limits = c(-1, 15))
+
+# What would we expect if the data were normally distributed? 
+normal_plot <- ggplot(data = data_normal, aes(x = Y)) +
+  geom_bar() +
+  labs(x = "No. of FCM larvae",
+       y = "Frequency",
+       subtitle = "(a) Expected under normal distribution") +
+  scale_x_continuous(breaks = seq(0, 15, 1),
+                     limits = c(-1, 15))
+
+# Put the two plots together 
+cowplot::plot_grid(normal_plot,
+                   count_plot,
+                   ncol = 2)
+```
+
+---
+
+# Modelling count data 
+
+--
+
+- There are two basic options for modelling count data:
+
+--
+
+  1. *Poisson GLM* - The poisson distribution assumes the mean = variance.
+
+--
+
+  2. *Negative binomial GLM* - Expects more variance than the Poisson. Variance > mean. 
+  
+--
+
+```{r, warning = FALSE, message = FALSE, fig.align = "center", out.height="80%", out.width="80%"}
+# Simulate negative binomial and Poisson data across groups 
+set.seed(2021)             
+data <- data.frame(Y_neg_bin = rnbinom(n = 200, mu = 4, size = 5),
+                   Y_pois = rpois(n = 200, lambda = 4),
+                   citrus_var = rnorm(n = 200, mean = 10)) %>%
+  dplyr::arrange(citrus_var)
+
+# Plot to visualise the differences 
+poisson_plot <- ggplot() +
+  geom_bar(data = data, aes(x = Y_pois),
+            fill = "red") +
+  scale_y_continuous(breaks = seq(0, 50, 10),
+                     limits = c(0, 50)) + 
+  scale_x_continuous(breaks = seq(0, 20, 4),
+                     limits = c(0, 20)) + 
+  labs(x = "No. of FCM larvae",
+       y = "Frequency",
+       subtitle = "(a) Poisson - mean = variance")
+
+neg_bin_plot <- ggplot() +
+  geom_bar(data = data, aes(x = Y_neg_bin),
+            fill = "blue") +
+  scale_y_continuous(breaks = seq(0, 50, 10),
+                     limits = c(0, 50)) + 
+  scale_x_continuous(breaks = seq(0, 20, 4),
+                     limits = c(0, 20)) + 
+  labs(x = "No. of FCM larvae",
+       y = "Frequency",
+       subtitle = "(b) Negative binomial - mean < variance")
+
+# Put the two plots together 
+cowplot::plot_grid(poisson_plot,
+                   neg_bin_plot,
+                   ncol = 2)
+```
+
+---
+
+# How to fit these models in R?
+
+--
+
+- Assuming our question is: *Are FCM abundances [fcm_count] higher on some citrus varieties [citrus_variety] than others?*
+
+--
+
+- *Poisson GLM*:
+
+`mod_poisson <- glm(fcm_count ~ citrus_variety, family = poisson(link = "log"), data = data)` 
+
+--
+
+- *Negative binomial GLM*:
+
+`mod_nb <- glmmTMB::glmmTMB(fcm_count ~ citrus_variety, family = nbinom2, data = data, REML = FALSE)` 
+
+--
+
+Let's go to R and fit some of these models. 
+
+
+
+
+
+
+
+
+

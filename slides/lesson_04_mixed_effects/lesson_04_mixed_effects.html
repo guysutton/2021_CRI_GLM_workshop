@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Intro to linear models   (for scared ecologists)</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Guy F. Sutton" />
+    <meta name="date" content="2021-01-01" />
+    <script src="lesson_04_mixed_effects_files/header-attrs/header-attrs.js"></script>
+    <link href="lesson_04_mixed_effects_files/remark-css/default.css" rel="stylesheet" />
+    <link href="lesson_04_mixed_effects_files/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="lesson_04_mixed_effects_files/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="lesson_04_mixed_effects_files/tile-view/tile-view.js"></script>
+    <link href="lesson_04_mixed_effects_files/panelset/panelset.css" rel="stylesheet" />
+    <script src="lesson_04_mixed_effects_files/panelset/panelset.js"></script>
+    <script src="lesson_04_mixed_effects_files/clipboard/clipboard.min.js"></script>
+    <link href="lesson_04_mixed_effects_files/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="lesson_04_mixed_effects_files/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="lesson_04_mixed_effects_files/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="lesson_04_mixed_effects_files/js-cookie/js.cookie.js"></script>
+    <script src="lesson_04_mixed_effects_files/peerjs/peerjs.min.js"></script>
+    <script src="lesson_04_mixed_effects_files/tiny.toast/toast.min.js"></script>
+    <link href="lesson_04_mixed_effects_files/xaringanExtra-broadcast/broadcast.css" rel="stylesheet" />
+    <script src="lesson_04_mixed_effects_files/xaringanExtra-broadcast/broadcast.js"></script>
+    <link href="lesson_04_mixed_effects_files/shareon/shareon.min.css" rel="stylesheet" />
+    <script src="lesson_04_mixed_effects_files/shareon/shareon.min.js"></script>
+    <link href="lesson_04_mixed_effects_files/xaringanExtra-shareagain/shareagain.css" rel="stylesheet" />
+    <script src="lesson_04_mixed_effects_files/xaringanExtra-shareagain/shareagain.js"></script>
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Intro to linear models <br> (for scared ecologists)
+## Lesson 4: Mixed-effects models (GLMM’s)
+### Guy F. Sutton
+### Centre for Biological Control, Department of Zoology and Entomology, Rhodes University, Makhanda
+### 2021
+
+---
+
+
+
+
+class: title-slide, right, top
+
+
+.right-column[
+  # Intro to linear models &lt;br&gt; (for scared ecologists)
+  ### Lesson 4: Mixed-effects models (GLMM's)
+  
+  ### **Guy F. Sutton**&lt;br&gt;
+  *Centre for Biological Control, Department of Zoology and Entomology, Rhodes University, Makhanda* &lt;br&gt;
+    2021
+]
+
+---
+  
+# Mixed effects model (GLMM's)
+
+- In recent years, mixed effects models have become very popular&lt;sup&gt;1&lt;sup&gt;.
+
+--
+
+  - GLMM's extend GLM's by combining fixed effects (from GLM's) with random effects (from GLMM's). 
+
+
+.footnote[
+[1] Bolker et al. 2009 *Trends in Ecology and Evolution*. 
+]
+
+---
+
+# What is a random effect? 
+
+--
+
+- Essentially a 'grouping variable'
+
+--
+
+- A variable that describes/accounts for some nesting/grouping structure in your data.
+
+--
+    - E.g. Sampling multiple transects within the same experimental plot
+
+--
+    - E.g. Sampling multiple quadrats within each transect within the same experimental plot.
+    
+--
+
+- Or, a variable that you don't really care about, but need to account for to address data independence. 
+
+--
+
+  - E.g. Measurements taken from a variety of sites, but not interested in site-level effects. 
+
+--
+
+.center[&lt;span style="     color: red !important;" &gt;We need an example&lt;/span&gt;]
+
+---
+
+# An example 
+
+- Let's consider the following study: 
+
+--
+
+- A test of Harrison's rule: parasite body size is positively correlated with the size of its host. 
+
+--
+
+  - So, we measure the length of n = 20 wasps each taken from their own plant stem (which we measure the diameter of) at each of 5 sites (n = 100 wasps in total). I.e. We take 20 insect body length and 20 plant stem diameter measures per site. 
+  
+--
+
+  - We don't really care about whether 'site' has an effect on wasp body length, but, there will almost certainly be variance in body length between sites.
+
+--
+
+  - We must account for site-level variance before we estimate the relationship between insect body length and the diameter of the host plant stem.
+
+---
+
+# An example - data visualisation
+
+
+![](lesson_04_mixed_effects_files/figure-html/unnamed-chunk-1-1.png)&lt;!-- --&gt;
+
+---
+
+# How do we fit this model? 
+
+### Option #1:
+
+`mod1 &lt;- glm(insect_body_length ~ plant_stem_diameter, data = df)` 
+
+--
+
+- Nope. We haven't accounted for any between-site variation.
+
+--
+
+- We may incorrectly attribute any site-level variance to an effect of plant stem diameter. 
+
+--
+
+- We could find statistical support for Harrison's rule, when it isn't true. 
+
+---
+
+# How do we fit this model? 
+
+### Option #2:
+
+`mod2 &lt;- glm(insect_body_length ~ plant_stem_diameter + site, data = df)` 
+
+--
+
+- Also a nope. While we have accounted for any between-site variation, we are testing a very different hypothesis to the hypothesis we wanted to test. 
+
+--
+
+- Here, we are testing if (1) plant stem diameter effects insect body length, and (2) whether insect body length differs between sites.
+
+--
+
+*Isn't (1) what we wanted?* 
+
+--
+
+- No. Because we are estimating a much more complex model, we decrease the statistical power of our model. 
+
+--
+
+- We may incorrectly conclude that there is no effect of plant stem diameter on insect body length (i.e. Harrison's rule), when there actually is an effect. 
+
+---
+
+# We need a GLMM
+
+- Here, we take multiple measurements from the same statistical unit (site), which may be more similar than measurements from other sites. 
+
+--
+
+  - This variation **MAY NOT** be random. 
+
+--
+
+  - This is also pseudoreplication. 
+
+--
+
+  - We must use a random effect to explicitly control for the non-independence between data points from within each site, and then estimate the effect of plant stem diameter on insect body length (i.e. Harrison's rule). 
+
+---
+
+# Random intercept 
+
+- We have three options when specifying our random effect. 
+
+--
+
+  - Option #1: Random intercept 
+
+--
+
+  - Option #2: Random slope
+
+--
+
+  - Option #3: Random intercept &amp; random slope
+
+---
+
+### Option #1: Random intercept 
+
+
+- Allows for the baseline relationship to be higher or lower for each site.   
+
+--
+
+  - Shifts the line up or down the y-axis.
+  
+--
+
+  - But, the slope of the relationship is consistent across sites. 
+  
+--
+
+  - We specify a random intercept using the syntax: `(1 | random effect)` 
+
+--
+
+&lt;img src="lesson_04_mixed_effects_files/figure-html/unnamed-chunk-2-1.png" width="80%" height="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Option #2: Random slope
+
+
+- Allows the fixed effect relationship (i.e. `plant_stem_diameter`) to vary between random effect levels (i.e. `site`).
+
+--
+
+  - The slope of the relationship varies across sites, but the baseline relationship is consistent between sites. 
+  
+--
+
+  - We specify a random slope using the syntax: `0 + fixed_effect|random effect)` 
+
+--
+
+&lt;img src="lesson_04_mixed_effects_files/figure-html/unnamed-chunk-3-1.png" width="80%" height="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Option #3: Random intercept &amp; random slope
+
+--
+
+- Allows the fixed effect relationship (i.e. `plant_stem_diameter`) to vary between random effect levels (i.e. `site`), and allows for the baseline relationship to be higher or lower for each site. 
+
+--
+
+  - We specify a random intercept and random slope using the syntax: `1 + fixed_effect|random effect)` 
+
+--
+
+&lt;img src="lesson_04_mixed_effects_files/figure-html/unnamed-chunk-4-1.png" width="80%" height="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Let's fit some models in R 
+
+... 
+
+---
+
+# GLMM's - final thoughts
+
+- Random effects are always categorical variables, not numeric. 
+
+--
+
+- Random effects should have at least 5 levels.
+
+--
+
+  - E.g. Sex (male/female) cannot be specified as a random effect. 
+
+--
+
+### Terminology:
+
+--
+
+- *Linear mixed effects model (LMM)*: Model with random effects, where the distribution = gaussian. 
+
+--
+
+  - Specified using the `lme4::lmer` function in R. 
+
+--
+
+- *Generalised linear mixed effects model (GLMM)*: Model with random effects, where the distribution is not = gaussian (e.g. Poisson, Negative binomial, Binomial.)
+
+--
+
+  - Specified using the `lme4::glmer` function in R. 
+
+---
+
+# GLMM's - final thoughts, part 2
+
+- GLMM's are extremely powerful tools, but must be used with caution&lt;sup&gt;2&lt;sup&gt;: 
+
+--
+
+- Rigorous evaluation of model fits (model diagnostics) is vital (e.g. using the `DHARMa` package in `R`).
+
+--
+
+- Experimental design, experimental design, experimental design...
+
+--
+
+  - Proper design of experiments is vital. 
+
+--
+
+  - Identify the hierachical structure of your data to specifcy random effects correctly.
+  
+--
+
+- My unsolicited advice: 
+
+--
+
+  - Try to write the `R` code for the model you will fit to the new experiment that you want to run (and run it past a friend)
+  - If you can't formulate the code for the model, you probably need to rethink the experiment (or find a new `R` tutor!!!). 
+
+.footnote[
+[1] Harrison et al. 2018 *PeerJ*. 
+]
+
+---
+
+# GLMM's - final thoughts, part 3
+
+- CONSULT A STATISTICIAN!!!
+
+--
+
+  - NB for GLMM's - they are hard!!!
+  
+--
+
+  - Don't just consult the statistician *after* the experiment: 
+
+&lt;br/&gt;
+&lt;br/&gt;
+
+.center[&lt;span style="     color: black !important;" &gt;To consult the statistician after an experiment is finished is often merely to ask him to conduct a post mortem examination. He can perhaps say what the experiment died of. - *Ronald Fisher*&lt;/span&gt;]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

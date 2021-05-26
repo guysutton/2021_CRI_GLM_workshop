@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Intro to linear models   (for scared ecologists)</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Guy F. Sutton" />
+    <meta name="date" content="2021-01-01" />
+    <script src="lesson_01_introduction_files/header-attrs/header-attrs.js"></script>
+    <link href="lesson_01_introduction_files/remark-css/default.css" rel="stylesheet" />
+    <link href="lesson_01_introduction_files/remark-css/default-fonts.css" rel="stylesheet" />
+    <link href="lesson_01_introduction_files/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="lesson_01_introduction_files/tile-view/tile-view.js"></script>
+    <link href="lesson_01_introduction_files/panelset/panelset.css" rel="stylesheet" />
+    <script src="lesson_01_introduction_files/panelset/panelset.js"></script>
+    <script src="lesson_01_introduction_files/clipboard/clipboard.min.js"></script>
+    <link href="lesson_01_introduction_files/xaringanExtra-clipboard/xaringanExtra-clipboard.css" rel="stylesheet" />
+    <script src="lesson_01_introduction_files/xaringanExtra-clipboard/xaringanExtra-clipboard.js"></script>
+    <script>window.xaringanExtraClipboard(null, {"button":"Copy Code","success":"Copied!","error":"Press Ctrl+C to Copy"})</script>
+    <script src="lesson_01_introduction_files/xaringanExtra-webcam/webcam.js"></script>
+    <script id="xaringanExtra-webcam-options" type="application/json">{"width":"200","height":"200","margin":"1em"}</script>
+    <script src="lesson_01_introduction_files/js-cookie/js.cookie.js"></script>
+    <script src="lesson_01_introduction_files/peerjs/peerjs.min.js"></script>
+    <script src="lesson_01_introduction_files/tiny.toast/toast.min.js"></script>
+    <link href="lesson_01_introduction_files/xaringanExtra-broadcast/broadcast.css" rel="stylesheet" />
+    <script src="lesson_01_introduction_files/xaringanExtra-broadcast/broadcast.js"></script>
+    <link href="lesson_01_introduction_files/shareon/shareon.min.css" rel="stylesheet" />
+    <script src="lesson_01_introduction_files/shareon/shareon.min.js"></script>
+    <link href="lesson_01_introduction_files/xaringanExtra-shareagain/shareagain.css" rel="stylesheet" />
+    <script src="lesson_01_introduction_files/xaringanExtra-shareagain/shareagain.js"></script>
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Intro to linear models <br> (for scared ecologists)
+## Lesson 1: Introduction to linear models
+### Guy F. Sutton
+### Centre for Biological Control, Department of Zoology and Entomology, Rhodes University, Makhanda
+### 2021
+
+---
+
+
+
+
+class: title-slide, right, top
+
+
+.right-column[
+# Intro to linear models &lt;br&gt; (for scared ecologists)
+### Lesson 1: Introduction to linear models
+
+### **Guy F. Sutton**&lt;br&gt;
+*Centre for Biological Control, Department of Zoology and Entomology, Rhodes University, Makhanda* &lt;br&gt;
+2021
+]
+
+---
+name: about-me
+layout: false
+class: about-me-slide, inverse, middle, center
+
+# About me
+
+&lt;img style="border-radius: 100%;" src="guy_grass_celebrate.png" width="200px"/&gt;
+
+## Guy F. Sutton
+
+### Research Entomologist
+
+.fade[Centre for Biological Control&lt;br&gt;Rhodes University, Makhanda]
+
+---
+
+# What is a statistical model? 
+
+--
+
+- *A model* shows how a variable of interest (Y - response variable) is related to one or more predictor variables (X - explanatory/independent variables).
+
+--
+
+  - E.g. Do larger fruits contain more FCM larvae? 
+
+![](lesson_01_introduction_files/figure-html/fig_1-1.png)&lt;!-- --&gt;
+
+---
+
+# What is a LINEAR model?
+
+--
+
+- A *linear model* represents how a variable of interest (Y - response variable), or **some distribution of Y** (e.g. log transformed version of Y),  is related to a linear combination of one or more predictor variables (X - explanatory/independent variables). 
+
+--
+
+  - A linear model DOES NOT necessarily expect a straight line between Y and X.
+
+--
+
+  - There just needs to be a straight line between X and some version of Y.
+
+--
+
+&lt;img src="lesson_01_introduction_files/figure-html/fig_exp_transformation-1.png" width="50%" /&gt;&lt;img src="lesson_01_introduction_files/figure-html/fig_exp_transformation-2.png" width="50%" /&gt;
+
+--
+
+- As long as we can transform Y to some linear relationship with X, we can model it, without very fancy statistics. 
+
+---
+
+# Why do we use linear models? 
+
+### 1a. Hypothesis testing: Categorical X variable 
+
+- We want to test for a statistical relationship between X and Y.
+
+--
+
+  - E.g. Are there more FCM larvae found in citrus variety A versus B?
+
+--
+
+![](lesson_01_introduction_files/figure-html/fig_hyp_test_numeric_x-1.png)&lt;!-- --&gt;
+
+---
+
+# Why do we use linear models? 
+
+### 1b. Hypothesis testing: Numeric X variable 
+
+- We want to test for a statistical relationship between X and Y.
+
+--
+
+  - E.g. Are there more FCM larvae found in larger fruits?
+
+--
+
+![](lesson_01_introduction_files/figure-html/fig_hyp_test_categorical_x-1.png)&lt;!-- --&gt;
+
+---
+
+# Why do we use linear models? 
+
+### 1c. Hypothesis testing: Numeric X variable and categorical X variable
+
+- We want to test for a statistical relationship between two X's and Y. 
+
+--
+
+  - E.g. Are there more FCM larvae found in larger fruits, and does this relationship vary among citrus varieties?
+
+--
+
+![](lesson_01_introduction_files/figure-html/fig_hyp_test_both_x-1.png)&lt;!-- --&gt;
+
+---
+
+# Why do we use linear models? 
+
+### 2. Prediction 
+
+- We want to predict Y from X
+
+--
+
+  - E.g. On average, how many FCM larave will you find in a fruit of diameter X?
+
+--
+
+  - Remember: *y = mx + c*
+
+--
+
+![](lesson_01_introduction_files/figure-html/fig_prediction-1.png)&lt;!-- --&gt;
+
+---
+
+# Choosing a statistical analysis
+
+&lt;div class="figure"&gt;
+&lt;img src="test_decision_tree_old_school.png" alt=" " width="200%" height="100%" /&gt;
+&lt;p class="caption"&gt; &lt;/p&gt;
+&lt;/div&gt;
+
+--
+
+.center[&lt;span style="     color: red !important;" &gt;This sucks!!!&lt;/span&gt;]
+
+---
+
+# General(ized) Linear Model (GLM) - Your new best friend
+
+&lt;div class="figure"&gt;
+&lt;img src="test_decision_tree_new_school.png" alt=" " width="200%" height="100%" /&gt;
+&lt;p class="caption"&gt; &lt;/p&gt;
+&lt;/div&gt;
+
+.footnote[
+[1] Francisco Rodriguez-Sanchez *https://frodriguezsanchez.net*. 
+]
+
+---
+
+# General R formula
+
+`mod1 &lt;- glm(response_variable (*y*) ~ 
+predictor_variable_1 (x1) + 
+predictor variable_2 (x2), 
+family = "statistical_family", 
+data = dataframe_name)`
+
+--
+
+- `response variable` (*y*): The variable of interest (the thing you are trying to predict)
+
+--
+
+- `predictor_variable_1` (x1): A variable which could explain *y*. Can be numeric or a factor. 
+
+--
+
+- `predictor_variable_2` (x2): As above. We can have many variables (x1, x2... xn).
+
+--
+
+- `statistical family`: the statistical distribution used to model the data (e.g. Gaussian, Poisson, Binomial)
+
+--
+
+- `data_frame_name`: The name of the R variable where your data is stored. 
+
+---
+
+# Quick example
+
+Let's say we have the following data:
+
+- No. of FCM larvae dissected per fruit 
+- Fruit diameter (cm)
+- Dissected 100 fruits from two different citrus varieties
+
+--
+
+
+```
+## Rows: 200
+## Columns: 3
+## $ no_fcm_larvae  &lt;int&gt; 5, 7, 6, 4, 6, 6, 6, 4, 7, 10, 1, 7, 5, 5, 7, 3, 5, ...
+## $ fruit_diameter &lt;dbl&gt; 18.698318, 22.251700, 19.285592, 17.566393, 14.02113...
+## $ citrus_var     &lt;chr&gt; "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A...
+```
+
+--
+
+Research Q: Does the number of FCM larvae per fruit increase with fruit diameter, and are FCM densities higher on citrus variety A versus B? 
+
+--
+
+**Writing this model in R code**
+
+`mod1 &lt;- glm(no_fcm_larvae ~ fruit_diameter + citrus_var, family = gaussian, data = data)`
+
+--
+
+We will go into more detail and example code later.
+
+---
+
+# What types of models can we fit? 
+
+#### Entry-level models (good options for most analyses) (covered in this course)
+
+1. Gaussian GLM - normally distributed Y, real numbers (e.g. FCM body mass)
+
+--
+
+2. Poisson GLM - count data (e.g. no. of FCM larvae)
+
+--
+
+3. Binomial GLM - Binary data (1/0, dead/alive), or proportion (between 0 and 1).
+
+--
+
+#### More advanced models (if options 1-3 are no good, then look here) (not covered in this course)
+
+--
+
+4. Negative binomial GLM - Extension of the Poisson.
+
+--
+
+5. Beta GLM - Extension of the binomial for when *y* is a proportion between 0 and 1, but is never 0 or 1. 
+
+--
+
+6. Gamma GLM - strictly positive numbers. Usually good options for modelling body mass. 
+
+---
+
+# What types of models can we fit? 
+
+## 1. Normal (Gaussian) distribution GLM
+
+- This is equivalent to linear regression if our x predictor variable is numeric (e.g. fruit diameter, nitrogen content, temperature, ect...). 
+
+--
+
+- This is equivalent to an ANOVA if our x predictor is categorical (citrus varieties, sites, ect...)
+
+--
+
+- The response variable (*y*) is continous, real numbers (e.g. 17.1, 6.363) (i.e. they usually can take a decimal place).
+
+--
+
+- The response variable should typically not be an interger/count (e.g. 0, 3, 81), logical (yes/no, dead/alive, 0/1), or a proportion (e.g. bounded between 0 and 1) - there are specific statistical distributions that are more suitable for these data types. 
+
+---
+
+# What types of models can we fit? 
+
+## 1. Normal (Gaussian) distribution
+
+&lt;img src="lesson_01_introduction_files/figure-html/unnamed-chunk-2-1.png" width="80%" height="80%" /&gt;
+
+--
+
+**Writing this model in R code**
+
+`mod_gaussian &lt;- glm(fcm_body_mass ~ citrus_var, family = gaussian, data = data)`
+
+---
+
+# What types of models can we fit? 
+
+## 2. Poisson GLM
+
+- The response variable (*y*) is an integer or count(e.g. 0, 8, 81) (i.e. values **CANNOT** take a decimal place).
+
+--
+
+  - If you can say: "number of ... before the name of your variable, a Poisson GLM is likely a good place to start. 
+  
+--
+  
+  - E.g. Number of FCM larvae, no. of psyllids per leaf, no. of whiteflies per plant.
+  
+--
+  
+  - Usually more smaller values than larger values. 
+
+---
+
+# What types of models can we fit? 
+
+## 2. Poisson GLM
+
+&lt;img src="lesson_01_introduction_files/figure-html/unnamed-chunk-3-1.png" width="80%" height="80%" /&gt;
+
+--
+
+**Writing this model in R code**
+
+`mod_poisson &lt;- glm(no_flies ~ citrus_var, family = poisson, data = data)`
+
+---
+
+# What types of models can we fit? 
+
+## 3. Binomial/logistic GLM
+
+- The response variable (*y*) is a logical/binary variable (e.g. 1/0, dead/alive, yes/no) or a proportion (bounded between 0 and 1). 
+
+--
+
+  - E.g. Proportion insects dead, percentage survival, ect...
+
+---
+
+# What types of models can we fit? 
+
+## 3. Binomial/logistic GLM
+
+&lt;img src="lesson_01_introduction_files/figure-html/unnamed-chunk-4-1.png" width="80%" height="80%" /&gt;
+
+--
+
+**Writing this model in R code**
+
+`mod_binomial &lt;- glm(no_flies ~ pesticide, family = binomial, data = data)`
+
+---
+
+# Modelling workflow
+
+- In next session, we will workthrough a basic statistical analysis workflow in R.
+
+&lt;div class="figure"&gt;
+&lt;img src="tidyverse_workflow.png" alt=" " width="75%" height="50%" /&gt;
+&lt;p class="caption"&gt; &lt;/p&gt;
+&lt;/div&gt;
+
+.footnote[
+[1] Wickham and Grolemund (2021) R for Data Science.  *Online textbook: https://r4ds.had.co.nz/*. 
+]
+
+
+
+
+
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

@@ -1,0 +1,511 @@
+---
+title: "Intro to linear models <br> (for scared ecologists)"
+author: "Guy F. Sutton"
+subtitle: "Lesson 4: Mixed-effects models (GLMM's)"
+date: "2021"
+institute: Centre for Biological Control, Department of Zoology and Entomology, Rhodes University, Makhanda
+#session: '04'
+output:
+  xaringan::moon_reader
+---
+
+```{r setup, include = FALSE}
+options(htmltools.dir.version = FALSE)
+library(knitr)
+library(tidyverse)
+library(xaringanExtra)
+library(fontawesome)
+library(here)
+# set default options
+opts_chunk$set(echo=FALSE,
+               collapse = TRUE,
+               fig.width = 7.252,
+               fig.height = 4,
+               dpi = 300)
+# set engines
+knitr::knit_engines$set("markdown")
+xaringanExtra::use_tile_view()
+xaringanExtra::use_panelset()
+xaringanExtra::use_clipboard()
+xaringanExtra::use_webcam()
+xaringanExtra::use_broadcast()
+xaringanExtra::use_share_again()
+xaringanExtra::style_share_again(
+  share_buttons = c("twitter", "linkedin", "pocket"))
+
+# Change ggplot theme
+# - This makes the graphs we will eventually make look pretty. 
+# - Don't worry about this for now. 
+theme_set(theme_classic() +
+            theme(panel.border = element_rect(colour = "black", 
+                                              fill = NA),
+                  axis.text = element_text(colour = "black"),
+                  axis.title.x = element_text(margin = unit(c(2, 0, 0, 0), 
+                                                            "mm")),
+                  axis.title.y = element_text(margin = unit(c(0, 4, 0, 0), 
+                                                            "mm")),
+                  legend.position = "none"))
+```
+
+class: title-slide, right, top
+```{r insert_image_background, include = FALSE}
+# Take this code out the chunk and put it in the document to insert images on the slide 
+#background-image: url(img/hex-xaringan.png), url(img/frame-art.png)
+#background-position: 90% 75%, 75% 75%
+#background-size: 8%, cover
+```
+
+.right-column[
+  # `r rmarkdown::metadata$title`
+  ### `r rmarkdown::metadata$subtitle`
+  
+  ### **`r rmarkdown::metadata$author`**<br>
+  *`r rmarkdown::metadata$institute`* <br>
+    `r rmarkdown::metadata$date`
+]
+
+---
+  
+# Mixed effects model (GLMM's)
+
+- In recent years, mixed effects models have become very popular<sup>1<sup>.
+
+--
+
+  - GLMM's extend GLM's by combining fixed effects (from GLM's) with random effects (from GLMM's). 
+
+
+.footnote[
+[1] Bolker et al. 2009 *Trends in Ecology and Evolution*. 
+]
+
+---
+
+# What is a random effect? 
+
+--
+
+- Essentially a 'grouping variable'
+
+--
+
+- A variable that describes/accounts for some nesting/grouping structure in your data.
+
+--
+    - E.g. Sampling multiple transects within the same experimental plot
+
+--
+    - E.g. Sampling multiple quadrats within each transect within the same experimental plot.
+    
+--
+
+- Or, a variable that you don't really care about, but need to account for to address data independence. 
+
+--
+
+  - E.g. Measurements taken from a variety of sites, but not interested in site-level effects. 
+
+--
+
+.center[`r kableExtra::text_spec("We need an example", color = "red")`]
+
+---
+
+# An example 
+
+- Let's consider the following study: 
+
+--
+
+- A test of Harrison's rule: parasite body size is positively correlated with the size of its host. 
+
+--
+
+  - So, we measure the length of n = 20 wasps each taken from their own plant stem (which we measure the diameter of) at each of 5 sites (n = 100 wasps in total). I.e. We take 20 insect body length and 20 plant stem diameter measures per site. 
+  
+--
+
+  - We don't really care about whether 'site' has an effect on wasp body length, but, there will almost certainly be variance in body length between sites.
+
+--
+
+  - We must account for site-level variance before we estimate the relationship between insect body length and the diameter of the host plant stem.
+
+---
+
+# An example - data visualisation
+
+
+```{r, message = FALSE, warning = FALSE}
+# Generate GLMM example data 
+# - Code and ideas from Michael Freeman (mfviz.com/hierarchical-models)
+
+# Load required packages 
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, 
+               lme4,
+               arm,
+               equatiomatic,
+               texPreview) 
+
+# Change ggplot theme
+# - This makes the graphs we will eventually make look pretty. 
+# - Don't worry about this for now. 
+theme_set(theme_classic() +
+            theme(panel.border = element_rect(colour = "black", 
+                                              fill = NA),
+                  axis.text = element_text(colour = "black"),
+                  axis.title.x = element_text(margin = unit(c(2, 0, 0, 0), 
+                                                            "mm")),
+                  axis.title.y = element_text(margin = unit(c(0, 4, 0, 0), 
+                                                            "mm"))))
+
+# Parameters for generating insect body mass data
+site <- c('Grahamstown', 'Port Elizabeth', 'East London', 'Queenstown', 'Cradock')
+base_mass <- c(40, 50, 60, 70, 80)
+increase_mass <- c(9, 5, 5, 7, 5)
+n_site <- 20
+n_total <- n_site * length(site)
+
+# Generate dataframe of body_mass and (random) sites
+ids <- 1:n_total
+site <- rep(site, n_site)
+body_length <- floor(runif(n_total, 0, 10))
+bases <- rep(base_mass, n_site) * runif(n_total, .9, 1.1) # noise
+raises <- rep(increase_mass, n_site) * runif(n_total, .9, 1.1) # noise
+df <- data.frame(ids, site, bases, body_length, raises)
+
+# Generate body masses (base + experience * raise)
+df <- df %>% 
+  dplyr::mutate(body_mass = bases + body_length * raises,
+                body_mass = (body_mass / 10) - 3) %>%
+  dplyr::select(site, 
+                plant_stem_diameter = body_length,
+                insect_body_length = body_mass)
+
+# Make plot 
+df %>%
+  ggplot(data = ., aes(x = plant_stem_diameter,
+                       y = insect_body_length,
+                       colour = site)) +
+  geom_point() +
+  labs(x = "Stem diameter (cm)",
+       y = "Insect body length (mm)",
+       colour = "Site")
+```
+
+---
+
+# How do we fit this model? 
+
+### Option #1:
+
+`mod1 <- glm(insect_body_length ~ plant_stem_diameter, data = df)` 
+
+--
+
+- Nope. We haven't accounted for any between-site variation.
+
+--
+
+- We may incorrectly attribute any site-level variance to an effect of plant stem diameter. 
+
+--
+
+- We could find statistical support for Harrison's rule, when it isn't true. 
+
+---
+
+# How do we fit this model? 
+
+### Option #2:
+
+`mod2 <- glm(insect_body_length ~ plant_stem_diameter + site, data = df)` 
+
+--
+
+- Also a nope. While we have accounted for any between-site variation, we are testing a very different hypothesis to the hypothesis we wanted to test. 
+
+--
+
+- Here, we are testing if (1) plant stem diameter effects insect body length, and (2) whether insect body length differs between sites.
+
+--
+
+*Isn't (1) what we wanted?* 
+
+--
+
+- No. Because we are estimating a much more complex model, we decrease the statistical power of our model. 
+
+--
+
+- We may incorrectly conclude that there is no effect of plant stem diameter on insect body length (i.e. Harrison's rule), when there actually is an effect. 
+
+---
+
+# We need a GLMM
+
+- Here, we take multiple measurements from the same statistical unit (site), which may be more similar than measurements from other sites. 
+
+--
+
+  - This variation **MAY NOT** be random. 
+
+--
+
+  - This is also pseudoreplication. 
+
+--
+
+  - We must use a random effect to explicitly control for the non-independence between data points from within each site, and then estimate the effect of plant stem diameter on insect body length (i.e. Harrison's rule). 
+
+---
+
+# Random intercept 
+
+- We have three options when specifying our random effect. 
+
+--
+
+  - Option #1: Random intercept 
+
+--
+
+  - Option #2: Random slope
+
+--
+
+  - Option #3: Random intercept & random slope
+
+---
+
+### Option #1: Random intercept 
+
+
+- Allows for the baseline relationship to be higher or lower for each site.   
+
+--
+
+  - Shifts the line up or down the y-axis.
+  
+--
+
+  - But, the slope of the relationship is consistent across sites. 
+  
+--
+
+  - We specify a random intercept using the syntax: `(1 | random effect)` 
+
+--
+
+```{r, fig.align = "center", out.height="80%", out.width="80%"}
+# Null model 
+m0 <- glm(insect_body_length ~ plant_stem_diameter, data=df)
+df$simple.model <- predict(m0)
+
+# Model with varying intercept
+m1 <- lmer(insect_body_length ~ plant_stem_diameter + (1|site), data = df)
+df$random.intercept.preds <- predict(m1)
+
+# Make plot 
+df %>%
+  ggplot(data = ., aes(x = plant_stem_diameter,
+                       y = random.intercept.preds,
+                       colour = site)) +
+  geom_line() +
+  geom_line(data = df, aes(x = plant_stem_diameter,
+                           y = simple.model),
+            linetype = "dashed",
+            colour = "black") +
+  labs(x = "Stem diameter (cm)",
+       y = "Insect body length (mm)",
+       colour = "Site",
+       title = "(a) insect_body_length ~ plant_stem_diameter + (1|site)")
+```
+
+---
+
+### Option #2: Random slope
+
+
+- Allows the fixed effect relationship (i.e. `plant_stem_diameter`) to vary between random effect levels (i.e. `site`).
+
+--
+
+  - The slope of the relationship varies across sites, but the baseline relationship is consistent between sites. 
+  
+--
+
+  - We specify a random slope using the syntax: `0 + fixed_effect|random effect)` 
+
+--
+
+```{r, fig.align = "center", out.height="80%", out.width="80%"}
+# Model with varying slope
+m2 <- lmer(insect_body_length ~ plant_stem_diameter + (1 + plant_stem_diameter|site), 
+           data=df)
+df$random.slope.preds <- predict(m2)
+
+# Make plot 
+df %>%
+  ggplot(data = ., aes(x = plant_stem_diameter,
+                       y = random.slope.preds,
+                       colour = site)) +
+  geom_line() +
+  geom_line(data = df, aes(x = plant_stem_diameter,
+                           y = simple.model),
+            linetype = "dashed",
+            colour = "black") +
+  labs(x = "Stem diameter (cm)",
+       y = "Insect body length (mm)",
+       colour = "Site",
+       title = "(b) insect_body_length ~ plant_stem_diameter + (0 + plant_stem_diameter|site)")
+```
+
+---
+
+### Option #3: Random intercept & random slope
+
+--
+
+- Allows the fixed effect relationship (i.e. `plant_stem_diameter`) to vary between random effect levels (i.e. `site`), and allows for the baseline relationship to be higher or lower for each site. 
+
+--
+
+  - We specify a random intercept and random slope using the syntax: `1 + fixed_effect|random effect)` 
+
+--
+
+```{r, fig.align = "center", out.height="80%", out.width="80%"}
+# Model with varying slope
+m3 <- lmer(insect_body_length ~ plant_stem_diameter + (1 + plant_stem_diameter|site), 
+           data=df)
+df$random.slope.int.preds <- predict(m2)
+
+# Make plot 
+df %>%
+  ggplot(data = ., aes(x = plant_stem_diameter,
+                       y = random.slope.int.preds,
+                       colour = site)) +
+  geom_line() +
+  geom_line(data = df, aes(x = plant_stem_diameter,
+                           y = simple.model),
+            linetype = "dashed",
+            colour = "black") +
+  labs(x = "Stem diameter (cm)",
+       y = "Insect body length (mm)",
+       colour = "Site",
+       title = "(c) insect_body_length ~ plant_stem_diameter + (1 + plant_stem_diameter|site)")
+```
+
+---
+
+# Let's fit some models in R 
+
+... 
+
+---
+
+# GLMM's - final thoughts
+
+- Random effects are always categorical variables, not numeric. 
+
+--
+
+- Random effects should have at least 5 levels.
+
+--
+
+  - E.g. Sex (male/female) cannot be specified as a random effect. 
+
+--
+
+### Terminology:
+
+--
+
+- *Linear mixed effects model (LMM)*: Model with random effects, where the distribution = gaussian. 
+
+--
+
+  - Specified using the `lme4::lmer` function in R. 
+
+--
+
+- *Generalised linear mixed effects model (GLMM)*: Model with random effects, where the distribution is not = gaussian (e.g. Poisson, Negative binomial, Binomial.)
+
+--
+
+  - Specified using the `lme4::glmer` function in R. 
+
+---
+
+# GLMM's - final thoughts, part 2
+
+- GLMM's are extremely powerful tools, but must be used with caution<sup>2<sup>: 
+
+--
+
+- Rigorous evaluation of model fits (model diagnostics) is vital (e.g. using the `DHARMa` package in `R`).
+
+--
+
+- Experimental design, experimental design, experimental design...
+
+--
+
+  - Proper design of experiments is vital. 
+
+--
+
+  - Identify the hierachical structure of your data to specifcy random effects correctly.
+  
+--
+
+- My unsolicited advice: 
+
+--
+
+  - Try to write the `R` code for the model you will fit to the new experiment that you want to run (and run it past a friend)
+  - If you can't formulate the code for the model, you probably need to rethink the experiment (or find a new `R` tutor!!!). 
+
+.footnote[
+[1] Harrison et al. 2018 *PeerJ*. 
+]
+
+---
+
+# GLMM's - final thoughts, part 3
+
+- CONSULT A STATISTICIAN!!!
+
+--
+
+  - NB for GLMM's - they are hard!!!
+  
+--
+
+  - Don't just consult the statistician *after* the experiment: 
+
+<br/>
+<br/>
+
+.center[`r kableExtra::text_spec("To consult the statistician after an experiment is finished is often merely to ask him to conduct a post mortem examination. He can perhaps say what the experiment died of. - *Ronald Fisher*", color = "black")`]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
