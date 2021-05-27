@@ -60,8 +60,7 @@ name: about-me
 layout: false
 class: about-me-slide, inverse, middle, center
 
-# About me
-
+# About me 
 &lt;img style="border-radius: 100%;" src="guy_grass_celebrate.png" width="200px"/&gt;
 
 ## Guy F. Sutton
@@ -69,6 +68,38 @@ class: about-me-slide, inverse, middle, center
 ### Research Entomologist
 
 .fade[Centre for Biological Control&lt;br&gt;Rhodes University, Makhanda]
+
+---
+
+# About me 
+
+- Research Entomologist
+
+--
+
+- NOT a statistician, *per se*!! (I do have quite a bit of training)
+  
+--
+
+  - Weed biological control
+  
+--
+
+  - Grass-insect interactions
+
+--
+
+  - Experimental design and data analysis
+  
+--
+
+  - Unhealthy relationship with `R` and `Julia` (another coding programme)
+  
+--
+
+#### Spare time:
+
+  - Basketball fanatic, Magic: The Gathering (card game), Lighthouses
 
 ---
 
@@ -106,7 +137,47 @@ class: about-me-slide, inverse, middle, center
 
 --
 
-- As long as we can transform Y to some linear relationship with X, we can model it, without very fancy statistics. 
+- As long as we can make Y take some linear relationship with X, we can model it, without very fancy statistics. 
+
+---
+
+# Transformation vs GLM
+
+--
+
+- Transforming your response variable (e.g. log10) IS NOT the same as GLM.
+
+--
+
+- Transformation takes the mean of the transformed variable.
+  
+--
+
+  - E.g. Analyses the mean of log(FCM_body_mass). 
+
+--
+
+  - Transforms the mean, but also transforms the variance (e.g. lognormal). 
+  
+--
+
+- GLM takes the log of the expected mean. 
+
+--
+
+  - E.g. Analyses the log(mean_expected_FCM_bodymass).
+
+--
+
+  - Transforms the mean, and we can explicitly model any variance we want. 
+
+--
+
+.center[&lt;span style="     color: red !important;" &gt;Confusing, right?!!!&lt;/span&gt;]
+
+--
+
+.center[&lt;span style="     color: red !important;" &gt;Please don't transform your response variables. Trust me!&lt;/span&gt;]
 
 ---
 
@@ -167,10 +238,6 @@ class: about-me-slide, inverse, middle, center
 --
 
   - E.g. On average, how many FCM larave will you find in a fruit of diameter X?
-
---
-
-  - Remember: *y = mx + c*
 
 --
 
